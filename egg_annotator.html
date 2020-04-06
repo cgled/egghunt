@@ -43,23 +43,36 @@
     </div>
     
     <div id="annotation_box" style="cats: meow; position: absolute; background-color: beige; left: 100; top: 100">
-        <p>Name: <textarea></textarea></p>
+        <p>Name: <textarea id="name_area"></textarea></p>
+        <p>Notes: <textarea id="note_area"></textarea></p>
         <p><button id="submit_egg">Submit</button><button id="cancel_egg">Cancel</button></p>
     </div>
 <script>
+        const initial_eggs = [{"x":1028,"y":2287,"radius":11.40175425099138,"name":"brown egg","notes":"Small, shiny, brown. Other possible eggs nearby."},{"x":3950,"y":2084,"radius":30,"name":"egg hat","notes":"large white egg shaped... hat? In the parade."},{"x":4518,"y":2365,"radius":14.317821063276353,"name":"boar testicles","notes":"could be an egg. Bluish."},{"x":5280,"y":692,"radius":45.27692569068709,"name":"pink building egg","notes":"dubious as an egg; has spines."},{"x":5167,"y":3188,"radius":100.40916292848975,"name":"pink marble egg.","notes":"distinctly egg-shaped."},{"x":3222,"y":4075,"radius":77.69813382572325,"name":"spherical pink egg with blue veins","notes":"A guy is leaning on it; not an archetypal egg."},{"x":5285,"y":3946,"radius":19.924858845171276,"name":"purple vine egg","notes":"probably a fruit, but whatever"},{"x":5518,"y":2921,"radius":57.87054518492115,"name":"hidden owl egg.","notes":"not visible, but the owl looks like it's hiding something."},{"x":5246,"y":1346,"radius":27.80287754891569,"name":"heron egg","notes":"just herons, but there's probably an egg in there."}];
 
-        let egg_start = {x: 0, y: 0}
+        let current_egg = {start_x: 0,start_y: 0,end_x: 0,end_y: 0,radius:0};
+        let all_eggs = initial_eggs;
 
-        function draw_circle(x,y,r) {
-            console.log("drawing circle; x="+x+" y=" + y + " r="+r);
+        function redraw() {
             let canvas = document.getElementById('overlay_canvas');
             let context = canvas.getContext('2d');
             context.clearRect(0, 0, canvas.width, canvas.height);
+            draw_all_eggs();
+        }
+
+        function draw_circle(x,y,r,color) {
+            console.log("drawing circle; x="+x+" y=" + y + " r="+r);
+            let canvas = document.getElementById('overlay_canvas');
+            let context = canvas.getContext('2d');
             context.beginPath();
             context.arc(x, y, r, 0, 2 * Math.PI);
             context.lineWidth = 2;
-            context.strokeStyle = 'green';
+            context.strokeStyle = color;
             context.stroke();
+        }
+
+        function draw_all_eggs() {
+            all_eggs.forEach(egg => draw_circle(egg.x,egg.y,egg.radius,'blue'))
         }
 
         function egg_marked(e) {
@@ -71,12 +84,15 @@
             ab.style.left = (e.offsetX+15)+'px';
             ab.style.top = (e.offsetY+15)+'px';
 
-            let egg_end = {x:e.offsetX,y:e.offsetY};
-            let dx = egg_start.x-egg_end.x;
-            let dy = egg_start.y-egg_end.y;
-            let egg_radius = Math.sqrt(dx*dx+dy*dy);
-            console.log("marked an egg with radius "+egg_radius);
-            draw_circle(egg_start.x,egg_start.y,egg_radius);
+            //egg_end = {x:e.offsetX,y:e.offsetY};
+            current_egg.end_x = e.offsetX;
+            current_egg.end_y = e.offsetY;
+            let dx = current_egg.start_x-current_egg.end_x;
+            let dy = current_egg.start_y-current_egg.end_y;
+            current_egg.radius = Math.sqrt(dx*dx+dy*dy);
+            console.log("marked an egg with radius "+current_egg.radius);
+            redraw();
+            draw_circle(current_egg.start_x,current_egg.start_y,current_egg.radius,'red');
 
         }
 
@@ -84,6 +100,22 @@
             console.log("clicked cancel");
             let ab = document.getElementById('annotation_box');
             ab.style.display="none";
+        }
+
+        function submit_ab() {
+            let egg_name_area = document.getElementById('name_area');
+            let egg_note_area = document.getElementById('note_area');
+
+            let egg_name = egg_name_area.value;
+            let egg_notes = egg_note_area.value;
+            console.log("clicked submit; name was " + egg_name);
+            let ab = document.getElementById('annotation_box');
+            ab.style.display="none";
+            let egg_addition = {x: current_egg.start_x, y: current_egg.start_y, radius: current_egg.radius, name: egg_name, notes: egg_notes};
+            all_eggs.push(egg_addition);
+            console.log(JSON.stringify(all_eggs));
+            egg_name_area.value = "";
+            egg_note_area.value = "";
         }
 
         function run_annotator() {
@@ -106,14 +138,16 @@
             let cancel_button = document.getElementById('cancel_egg');
             let submit_button = document.getElementById('submit_egg');
 
-            garden.onmousedown = function(e) {egg_start.x = e.offsetX; egg_start.y = e.offsetY};
+            garden.onmousedown = function(e) {current_egg.start_x = e.offsetX; current_egg.start_y = e.offsetY};
             //canvas.onmousedown = function(e) {egg_start.x = e.offsetX; egg_start.y = e.offsetY};
             garden.onmouseup = egg_marked;
             //canvas.onmouseup = egg_marked();
             garden.ondragstart = function() {return false};
             cancel_button.onclick = cancel_ab; 
-
+            submit_button.onclick = submit_ab;
+            redraw();
         }
+
     </script>
 
 </body>
