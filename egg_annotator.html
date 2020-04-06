@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Egg Hunt Annotator</title>
+    <style>
+        body{background: #f2f6f8;}
+        
+        #annotation_box {z-index:10;}
+
+        #garden{position:absolute;z-index:1;}
+
+        #container{
+            display:inline-block;
+            margin: 0 auto; 
+            background: blue; 
+            position:relative; 
+            border:5px solid green; 
+            width:3200px; 
+            height:4800px;
+            border-radius: 10px; 
+            box-shadow: 0 5px 50px #333}
+
+        #overlay_canvas{
+            position:relative;
+            z-index:20;
+            width:3200px; 
+            height:4800px;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body onload="run_annotator()">
+   
+    <div id="container">    
+        <img id="garden" src="The_Garden_of_Earthly_Delights_by_Bosch_High_Resolution_2.jpg" />
+        <canvas id="overlay_canvas"></canvas>
+
+    </div>
+    
+    <div id="annotation_box" style="cats: meow; position: absolute; background-color: beige; left: 100; top: 100">
+        <p>Name: <textarea></textarea></p>
+        <p><button id="submit_egg">Submit</button><button id="cancel_egg">Cancel</button></p>
+    </div>
+<script>
+
+        let egg_start = {x: 0, y: 0}
+
+        function draw_circle(x,y,r) {
+            console.log("drawing circle; x="+x+" y=" + y + " r="+r);
+            let canvas = document.getElementById('overlay_canvas');
+            let context = canvas.getContext('2d');
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            context.beginPath();
+            context.arc(x, y, r, 0, 2 * Math.PI);
+            context.lineWidth = 2;
+            context.strokeStyle = 'green';
+            context.stroke();
+        }
+
+        function egg_marked(e) {
+            console.log("clicked garden; e.x="+e.x+", e.offsetX="+e.offsetX);
+            let ab = document.getElementById('annotation_box');
+            
+            ab.style.display="inline";
+            ab.style.position = "absolute";
+            ab.style.left = (e.offsetX+15)+'px';
+            ab.style.top = (e.offsetY+15)+'px';
+
+            let egg_end = {x:e.offsetX,y:e.offsetY};
+            let dx = egg_start.x-egg_end.x;
+            let dy = egg_start.y-egg_end.y;
+            let egg_radius = Math.sqrt(dx*dx+dy*dy);
+            console.log("marked an egg with radius "+egg_radius);
+            draw_circle(egg_start.x,egg_start.y,egg_radius);
+
+        }
+
+        function cancel_ab() {
+            console.log("clicked cancel");
+            let ab = document.getElementById('annotation_box');
+            ab.style.display="none";
+        }
+
+        function run_annotator() {
+            console.log("called run_annotator");
+            let garden = document.getElementById("garden");
+            let gcontainer = document.getElementById("container");
+            let canvas = document.getElementById('overlay_canvas');
+
+            gcontainer.style.width = garden.clientWidth+"px";
+            gcontainer.style.height = garden.clientHeight+"px";
+            canvas.style.width = garden.clientWidth+"px";
+            canvas.style.height = garden.clientHeight+"px";
+            canvas.width = garden.clientWidth;
+            canvas.height = garden.clientHeight;
+
+            console.log("Garden width: " + garden.clientWidth);
+            console.log("container width: " + gcontainer.style.width);
+
+            let ab = document.getElementById('annotation_box');
+            let cancel_button = document.getElementById('cancel_egg');
+            let submit_button = document.getElementById('submit_egg');
+
+            garden.onmousedown = function(e) {egg_start.x = e.offsetX; egg_start.y = e.offsetY};
+            //canvas.onmousedown = function(e) {egg_start.x = e.offsetX; egg_start.y = e.offsetY};
+            garden.onmouseup = egg_marked;
+            //canvas.onmouseup = egg_marked();
+            garden.ondragstart = function() {return false};
+            cancel_button.onclick = cancel_ab; 
+
+        }
+    </script>
+
+</body>
+
+</html>
