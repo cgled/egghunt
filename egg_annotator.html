@@ -9,7 +9,33 @@
     <style>
         body{background: #f2f6f8;}
         
-        #annotation_box {z-index:10;}
+        #annotation_box {
+            position: absolute; background-color: beige;
+            z-index:10;display:none;
+        }
+
+        #egg_collection {
+            position: absolute; background-color: #D1D1D1;;
+            left: 100px; top: 100px;
+            width: 300px;
+            z-index:20;
+            display: inline;
+            padding                 :   10px 20px;
+            border-style                :   solid;
+            border-width                :   8px;
+            border-color                :   #313131;
+            -webkit-border-radius       :   3px;
+            -moz-border-radius          :   3px;
+            border-radius               :   3px;
+        }
+
+        .diffy {
+            mix-blend-mode: difference;
+        }
+        .inactive {
+            color: gray;
+            text-decoration: line-through;
+        }
 
         #garden{position:absolute;z-index:1;}
 
@@ -42,12 +68,23 @@
 
     </div>
     
-    <div id="annotation_box" style="cats: meow; position: absolute; background-color: beige; left: 100; top: 100">
+    <div id="annotation_box">
         <p>Name: <textarea id="name_area"></textarea></p>
         <p>Color: <textarea id="color_area"></textarea></p>
         <p>description: <textarea id="description_area"></textarea></p>
         <p>Contents: <textarea id="contents_area"></textarea></p>
         <p><button id="submit_egg">Submit</button><button id="cancel_egg">Cancel</button></p>
+    </div>
+
+    <div id="egg_collection">
+        <h2>Egg collection</h2>
+        This box shows your egg collection and the goodies inside your eggs. Click on an egg to open it.<p>If an egg has been opened, it will be gray with a line through it.
+            <p>Hover your mouse over an egg to see its description.</p>
+        <p><b>Egg basket:</b></p>
+        <ul id="egg_list"></ul>
+        <p><b>Goodies collected:</b></p>
+        <ul id="goodies_list"></ul>
+
     </div>
 <script>
         const initial_eggs = [
@@ -97,7 +134,12 @@
             {"x":5227,"y":2818,"radius":46.09772228646444,"name":"Egg head","contents":"A human brain.","description":"It's a head, it's a grape, it's an egg!","color":"blue"},
             {"x":1967,"y":3066,"radius":76.27581530209953,"name":"Sexy owl egg","contents":"A fetching owlet with a big human nose.","description":"The egg of an unusually comely owl.","color":"brown"},
             {"x":3373,"y":270,"radius":9.219544457292887,"name":"High egg","contents":"Six ounces of schmackle.","description":"From a haughty schmackle bird.","color":"red"},
-            {"x":4267,"y":2056,"radius":21.540659228538015,"name":"Big turtle egg","contents":"A bigger-than-average chocolate turtle.","description":"Must have come from a big turtle!","color":"white"}]
+            {"x":4267,"y":2056,"radius":21.540659228538015,"name":"Big turtle egg","contents":"A bigger-than-average chocolate turtle.","description":"Must have come from a big turtle!","color":"white"},
+            {"x":6728,"y":1771,"radius":177.01129907438113,"name":"Party egg","contents":"A beer keg, furniture, and several partygoers","description":"Ain't no party like a hell party!","color":"white"},
+            {"x":784,"y":1728,"radius":37,"name":"Transparent egg","contents":"transparent chocolate","description":"almost perfectly transparent","color":"white"},
+            {"x":1063,"y":1724,"radius":38.600518131237564,"name":"Transparent egg 2","contents":"Nitrogen, oxygen, and CO2.","description":"Like glass.","color":"white"},
+            {"x":382,"y":3346,"radius":14.035668847618199,"name":"Green camouflage egg","contents":"A baby green chameleon.","description":"Cleverly disguised as a leaf!","color":"green"},
+            {"x":7110,"y":3407,"radius":56.00892785976178,"name":"Mirror egg.","contents":"A white rabbit.","description":"Perfectly reflective. Spooky.","color":"black"}]
         
         let current_egg = {start_x: 0,start_y: 0,end_x: 0,end_y: 0,radius:0};
         let all_eggs = initial_eggs;
@@ -124,6 +166,14 @@
             all_eggs.forEach(egg => draw_circle(egg.x,egg.y,egg.radius, egg.color))
         }
 
+        function draw_found_eggs() {
+            all_eggs.forEach(egg => {
+                if(egg.isFound) {
+                draw_circle(egg.x,egg.y,egg.radius, egg.color)
+                }
+            })
+        }
+
         function egg_marked(e) {
             console.log("clicked garden; e.x="+e.x+", e.offsetX="+e.offsetX);
             let ab = document.getElementById('annotation_box');
@@ -142,7 +192,55 @@
             console.log("marked an egg with radius "+current_egg.radius);
             redraw();
             draw_circle(current_egg.start_x,current_egg.start_y,current_egg.radius,'red');
+        }
 
+        function found_egg(egg) {
+            console.log(egg.name);
+            let egg_list = document.getElementById('egg_list');
+            let li = document.createElement("li");
+            let egg_button = document.createElement("button");
+            egg_button.style.backgroundColor = egg.color;
+            li.appendChild(egg_button);
+            let btxt = document.createTextNode(egg.name);
+            btxt.className = "diffy";
+            egg_button.appendChild(btxt);
+            egg_button.title = egg.description;
+            egg_button.addEventListener("click",click => {
+                opened_egg(egg);
+                egg_button.className = "inactive";
+            })
+            egg_list.appendChild(li);
+        }
+
+        function opened_egg(egg) {
+            console.log("opened: " + egg.name);
+            if(egg.is_opened) {
+                console.log("Already opened!");
+            } else {
+                egg.is_opened = true;
+                let goodies_list = document.getElementById('goodies_list');
+                let li = document.createElement("li");
+                li.appendChild(document.createTextNode(egg.contents));
+                goodies_list.appendChild(li);
+            }
+        }
+ 
+        function hunt_click(e) {
+            console.log("called hunt_click");
+            let cx = e.offsetX;
+            let cy = e.offsetY;
+            function clicked_on_egg(egg) {
+                let dx = egg.x-cx;
+                let dy = egg.y-cy;
+                return Math.sqrt(dx*dx+dy*dy) < egg.radius
+            }
+            all_eggs.forEach(egg => {
+              if(clicked_on_egg(egg) && !egg.isFound) {
+                  found_egg(egg);
+                  egg.isFound = true;
+              }
+            })
+            draw_found_eggs();
         }
 
         function cancel_ab() {
@@ -178,6 +276,7 @@
         }
 
         function run_annotator() {
+            const mode = "hunt" // or annotate
             console.log("called run_annotator");
             let garden = document.getElementById("garden");
             let gcontainer = document.getElementById("container");
@@ -196,15 +295,20 @@
             let ab = document.getElementById('annotation_box');
             let cancel_button = document.getElementById('cancel_egg');
             let submit_button = document.getElementById('submit_egg');
+            if(mode == "annotate") {
+                garden.onmousedown = function(e) {current_egg.start_x = e.offsetX; current_egg.start_y = e.offsetY};
+                garden.onmouseup = egg_marked;
+                redraw();
+            } else { // if not annotate, then hunt
+                let i=0;
+                all_eggs.forEach(egg => {egg.found = false;egg.index=i;i++})
 
-            garden.onmousedown = function(e) {current_egg.start_x = e.offsetX; current_egg.start_y = e.offsetY};
-            //canvas.onmousedown = function(e) {egg_start.x = e.offsetX; egg_start.y = e.offsetY};
-            garden.onmouseup = egg_marked;
+                garden.onmousedown = hunt_click;
+            }
             //canvas.onmouseup = egg_marked();
             garden.ondragstart = function() {return false};
             cancel_button.onclick = cancel_ab; 
             submit_button.onclick = submit_ab;
-            redraw();
         }
 
     </script>
