@@ -77,6 +77,8 @@
     </div>
 
     <div id="egg_collection">
+        <b>Welcome to the Garden of Eggly Delights!</b><p>There are eggs hidden throughout its three sections. See how many you can collect. Some are stranger and subtler than others.</p>
+        You have found <b id="egg_counter">0</b> eggs so far.<p><div id="egg_counter_message"></div></p>
         <h2>Egg collection</h2>
         This box shows your egg collection and the goodies inside your eggs. Click on an egg to open it.<p>If an egg has been opened, it will be gray with a line through it.
             <p>Hover your mouse over an egg to see its description.</p>
@@ -143,6 +145,7 @@
         
         let current_egg = {start_x: 0,start_y: 0,end_x: 0,end_y: 0,radius:0};
         let all_eggs = initial_eggs;
+        let eggs_found = 0;
 
         function redraw() {
             let canvas = document.getElementById('overlay_canvas');
@@ -194,8 +197,27 @@
             draw_circle(current_egg.start_x,current_egg.start_y,current_egg.radius,'red');
         }
 
+        function update_count_message() {
+            let egg_counter = document.getElementById('egg_counter');
+            egg_counter.innerHTML = eggs_found;
+            let egg_count_message = document.getElementById('egg_counter_message');
+            let msg = "";
+            if(eggs_found > 50) {"A cracking job!"} 
+                else if(eggs_found > 40) {msg = "That's hard to beat!"}
+                else if(eggs_found > 30) {msg = "Egg-stremely nice work!"}
+                else if(eggs_found > 25) {msg = "Do you feel the egg-stasy?"}
+                else if(eggs_found > 20) {msg = "You can now make eggs-tra spicy devilled eggs to give to the devils!"}
+                else if(eggs_found > 15) {msg = "Egg-ceptional!"}
+                else if(eggs_found > 10) {msg = "Eggs-celent! (You have unlocked egg pun messages)"}
+                else if(eggs_found > 5)  {msg = "Well done! Keep looking!"}
+                else {msg = "Nice! There are lots more eggs to find."}
+            egg_count_message.innerHTML = msg;
+        }
+
         function found_egg(egg) {
             console.log(egg.name);
+            eggs_found++;
+            update_count_message();
             let egg_list = document.getElementById('egg_list');
             let li = document.createElement("li");
             let egg_button = document.createElement("button");
